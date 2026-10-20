@@ -15,12 +15,26 @@ var depCmd = &cobra.Command{
 	Short: "Manage dependencies",
 }
 
+func validateDependency(issueID, dependsOnID string) error {
+	if issueID == "" || dependsOnID == "" {
+		return fmt.Errorf("both issue ids are required")
+	}
+	if issueID == dependsOnID {
+		return fmt.Errorf("an issue cannot depend on itself (%s)", issueID)
+	}
+	return nil
+}
+
 var depAddCmd = &cobra.Command{
 	Use:   "add [issue-id] [depends-on-id]",
 	Short: "Add a dependency",
 	Args:  cobra.ExactArgs(2),
 	Run: func(cmd *cobra.Command, args []string) {
 		depType, _ := cmd.Flags().GetString("type")
+		if err := validateDependency(args[0], args[1]); err != nil {
+			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+			os.Exit(1)
+		}
 
 		dep := &types.Dependency{
 			IssueID:     args[0],
